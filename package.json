@@ -17,7 +17,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": "del /S /F /Q static && cd ../openfullstack/part2/phonebook && npm run build --prod && xcopy /E /I build ..\\..\\..\\fullstackopen-part3\\static",
     "deploy": "git push heroku master",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && npm run deploy",
     "logs:prod": "heroku logs --tail"
   },
   "repository": {
