@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
-
+//random comment
 app.use(express.static("static"));
 app.use(cors());
 
