@@ -4,7 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 app.use(express.static("static"));
 app.use(cors());
-
+//random comment
 app.use(express.json());
 morgan.token("body", (req, res) => JSON.stringify(req.body));
 
