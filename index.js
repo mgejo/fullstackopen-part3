@@ -26,7 +26,7 @@ app.use(
 
 let persons = [
   {
-    name: "Arto Hellas",
+    name: "checking",
     number: "040-123456",
     id: 1,
   },
