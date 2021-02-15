@@ -4,7 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 app.use(express.static("static"));
 app.use(cors());
-//random comment 2
+
 app.use(express.json());
 morgan.token("body", (req, res) => JSON.stringify(req.body));
 
@@ -26,7 +26,7 @@ app.use(
 
 let persons = [
   {
-    name: "checking",
+    name: "Arto Hellas",
     number: "040-123456",
     id: 1,
   },
