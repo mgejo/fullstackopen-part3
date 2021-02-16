@@ -41,12 +41,13 @@ app.get("/api/persons/:id", (request, response, next) => {
 });
 
 app.get("/info", (request, response) => {
-  Person.find({}).then((persons) => {
-    personNumber = persons.length;
-    const str1 = `<p>Phonebook has info for ${personNumber} people<p>`;
-    const str2 = `<p>${new Date()}<p>`;
-    response.send(str1 + str2);
-  });
+  Person.find({})
+    .then((persons) => persons.length)
+    .then((personNumber) => {
+      const str1 = `<p>Phonebook has info for ${personNumber} people<p>`;
+      const str2 = `<p>${new Date()}<p>`;
+      response.send(str1 + str2);
+    });
 });
 
 app.delete("/api/persons/:id", (request, response, next) => {
@@ -55,24 +56,13 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
-  if (!body || !body.name || !body.number) {
-    return response.status(400).json({
-      error: "content missing",
-    });
-  }
-  const name = body.name;
-  const number = body.number;
-  /*
-  if (persons.find((person) => person.name === name)) {
-    return response.status(400).json({
-      error: "duplicate name",
-    });
-  }
-  */
-  const person = new Person({ name, number });
-  person.save().then((savedPerson) => response.json(savedPerson));
+  const person = new Person({ name: body.name, number: body.number });
+  person
+    .save()
+    .then((savedPerson) => response.json(savedPerson))
+    .catch((error) => next(error));
 });
 
 app.put("/api/persons/:id", (request, response, next) => {
@@ -90,7 +80,9 @@ const errorHandler = (error, request, response, next) => {
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
   }
-
+  if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
+  }
   next(error);
 };
 
