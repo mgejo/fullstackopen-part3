@@ -1,11 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 app.use(express.static("static"));
 app.use(cors());
-
 app.use(express.json());
+const Person = require("./models/person");
+
 morgan.token("body", (req, res) => JSON.stringify(req.body));
 
 app.use(
@@ -24,94 +26,76 @@ app.use(
   })
 );
 
-let persons = [
-  {
-    name: "Arto Hellas",
-    number: "040-123456",
-    id: 1,
-  },
-  {
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-    id: 2,
-  },
-  {
-    name: "Dan Abramov",
-    number: "12-43-234345",
-    id: 3,
-  },
-  {
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-    id: 4,
-  },
-];
-
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => response.json(persons));
 });
 
-app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id);
-  if (!person) {
-    response.status(404).end();
-  }
-  if (person) {
-    response.send(person);
-  }
+app.get("/api/persons/:id", (request, response, next) => {
+  Person.findById(request.params.id)
+    .then((person) => {
+      person ? response.json(person) : response.status(404).end();
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 app.get("/info", (request, response) => {
-  const str1 = `<p>Phonebook has info for ${persons.length} people<p>`;
-  const str2 = `<p>${new Date()}<p>`;
-  response.send(str1 + str2);
+  Person.find({}).then((persons) => {
+    personNumber = persons.length;
+    const str1 = `<p>Phonebook has info for ${personNumber} people<p>`;
+    const str2 = `<p>${new Date()}<p>`;
+    response.send(str1 + str2);
+  });
 });
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  response.status(204).end();
+app.delete("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndRemove(request.params.id)
+    .then((result) => response.status(204).end())
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (request, response) => {
-  const id = Math.floor(Math.random() * Math.floor(20000));
   const body = request.body;
-  const name = body.name;
-  const number = body.number;
-  if (!name || !number) {
+  if (!body || !body.name || !body.number) {
     return response.status(400).json({
       error: "content missing",
     });
   }
+  const name = body.name;
+  const number = body.number;
+  /*
   if (persons.find((person) => person.name === name)) {
     return response.status(400).json({
       error: "duplicate name",
     });
   }
-  const person = { name, number, id };
-  persons = persons.concat(person);
-  response.json(person);
+  */
+  const person = new Person({ name, number });
+  person.save().then((savedPerson) => response.json(savedPerson));
 });
 
-app.put("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  updatePerson = persons.find((person) => person.id === id);
-  if (!updatePerson) {
-    return response.status(400).json({
-      error: "no resource with that ID",
-    });
+app.put("/api/persons/:id", (request, response, next) => {
+  const id = request.params.id;
+  const body = request.body;
+  const person = { name: body.name, number: body.number };
+  Person.findByIdAndUpdate(id, person, { new: true })
+    .then((updatedPerson) => response.json(updatedPerson))
+    .catch((error) => next(error));
+});
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
   }
-  newPerson = request.body;
-  updatePerson = {
-    ...updatePerson,
-    number: newPerson.number,
-    name: newPerson.name,
-  };
-  persons = persons.map((person) => (person.id === id ? updatePerson : person));
-  response.json(updatePerson);
-});
 
-const PORT = process.env.PORT || 3001;
+  next(error);
+};
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT;
 app.listen(PORT);
 console.log(`Server running on port ${PORT}`);
