@@ -7,6 +7,7 @@ app.use(express.static("static"));
 app.use(cors());
 app.use(express.json());
 const Person = require("./models/person");
+const { query } = require("express");
 
 morgan.token("body", (req, res) => JSON.stringify(req.body));
 
@@ -69,7 +70,11 @@ app.put("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
   const body = request.body;
   const person = { name: body.name, number: body.number };
-  Person.findByIdAndUpdate(id, person, { new: true })
+  Person.findByIdAndUpdate(id, person, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((updatedPerson) => response.json(updatedPerson))
     .catch((error) => next(error));
 });
